@@ -3,7 +3,7 @@ from __future__ import annotations
 import pickle
 from pathlib import Path
 
-from face_recognition_core import FaceRecognizer
+from .core import FaceRecognizer
 
 DATA_FILE = Path("face_recognizer_data.pkl")
 

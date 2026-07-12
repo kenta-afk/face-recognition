@@ -1,8 +1,13 @@
 import streamlit as st
 
-from face_recognition_model import load_insightface
-from face_recognition_storage import load_face_recognizer, save_face_recognizer
-from face_recognition_views import render_recognition_mode, render_registration_mode, render_sidebar
+from face_recognition_app import (
+    load_face_recognizer,
+    load_insightface,
+    render_recognition_mode,
+    render_registration_mode,
+    render_sidebar,
+    save_face_recognizer,
+)
 
 
 def main():
