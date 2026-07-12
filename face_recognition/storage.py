@@ -20,9 +20,16 @@ def load_face_recognizer(model_app, path: Path = DATA_FILE):
     if isinstance(saved_data, dict):
         recognizer.known_faces = saved_data.get("known_faces", saved_data)
         recognizer.threshold = saved_data.get("threshold", recognizer.threshold)
+        recognizer.face_vectors = saved_data.get("face_vectors", {})
     else:
         recognizer.known_faces = getattr(saved_data, "known_faces", {})
         recognizer.threshold = getattr(saved_data, "threshold", recognizer.threshold)
+
+    if not recognizer.face_vectors:
+        recognizer.face_vectors = {
+            label: [embedding]
+            for label, embedding in recognizer.known_faces.items()
+        }
 
     return recognizer
 
@@ -31,6 +38,7 @@ def save_face_recognizer(recognizer, path: Path = DATA_FILE):
     payload = {
         "known_faces": recognizer.known_faces,
         "threshold": recognizer.threshold,
+        "face_vectors": recognizer.face_vectors,
     }
     with open(path, "wb") as f:
         pickle.dump(payload, f)

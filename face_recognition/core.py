@@ -11,6 +11,7 @@ class FaceRecognizer:
         self.app = insightface_app
         self.threshold = threshold
         self.known_faces = {}
+        self.face_vectors = {}
 
     def _normalize(self, embedding):
         norm = np.linalg.norm(embedding)
@@ -53,6 +54,7 @@ class FaceRecognizer:
                 embeddings_list.append(embedding)
 
         if embeddings_list:
+            self.face_vectors[label] = embeddings_list
             self.known_faces[label] = np.mean(embeddings_list, axis=0)
             print(f"Registered {label} with {len(embeddings_list)} image(s).")
             return True, f"{label} を登録しました"
@@ -65,7 +67,56 @@ class FaceRecognizer:
             return False, f"{label} は登録されていません"
 
         del self.known_faces[label]
+        self.face_vectors.pop(label, None)
         return True, f"{label} を削除しました"
+
+    def get_registered_face_vectors(self):
+        return self.face_vectors
+
+    def compare_with_registered_faces(self, query_embedding):
+        if query_embedding is None:
+            return None, []
+
+        q_vec = self._normalize(query_embedding)
+        if q_vec is None:
+            return None, []
+
+        comparisons = []
+        best_label = None
+        best_distance = float("inf")
+
+        for label, stored_vectors in self.face_vectors.items():
+            sample_distances = []
+            for vector in stored_vectors:
+                k_vec = self._normalize(vector)
+                if k_vec is None:
+                    continue
+
+                cosine_similarity = np.dot(q_vec, k_vec)
+                distance = 1.0 - cosine_similarity
+                sample_distances.append(float(distance))
+
+            if not sample_distances:
+                continue
+
+            min_distance = min(sample_distances)
+            comparisons.append(
+                {
+                    "label": label,
+                    "sample_count": len(sample_distances),
+                    "mean_distance": float(np.mean(sample_distances)),
+                    "min_distance": float(min_distance),
+                    "sample_distances": sample_distances,
+                    "vectors": [vector.tolist() for vector in stored_vectors],
+                }
+            )
+
+            if min_distance < best_distance:
+                best_distance = min_distance
+                best_label = label
+
+        comparisons.sort(key=lambda item: item["min_distance"])
+        return best_label, comparisons
 
     def recognize_face_from_embedding(self, query_embedding):
         if query_embedding is None:
