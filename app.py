@@ -1,6 +1,6 @@
 import streamlit as st
 
-from face_recognition_app import (
+from face_recognition import (
     load_face_recognizer,
     load_insightface,
     render_recognition_mode,
